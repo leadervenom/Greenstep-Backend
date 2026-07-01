@@ -1,0 +1,20 @@
+{
+    "name": "sql/greenstep-api",
+    "authors": [
+        {
+            "name": "ks-ampangkl",
+            "email": "kugaann@graduate.utm.my"
+        }
+    ],
+"require": {
+        "slim/slim": "^4.0",
+        "slim/psr7": "^1.0",
+        "vlucas/phpdotenv": "^5.6",
+        "firebase/php-jwt": "^7.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+}
