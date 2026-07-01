@@ -1,0 +1,6 @@
+USE greenstep_api;
+
+ALTER TABLE users
+  ADD COLUMN password_hash VARCHAR(255) NOT NULL DEFAULT '' AFTER email,
+  ADD COLUMN role ENUM('member','admin') NOT NULL DEFAULT 'member' AFTER password_hash,
+  ADD COLUMN updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at;

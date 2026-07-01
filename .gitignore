@@ -1,0 +1,11 @@
+composer.json
+composer.lock
+/vendor
+/node_modules
+/.idea
+/.vscode
+/.env
+package-lock.json
+package.json
+node_modules
+frontend/dist/

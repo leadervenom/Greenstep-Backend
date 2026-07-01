@@ -1,0 +1,968 @@
+@baseUrl = http://localhost:8000
+@memberEmail = you@greenstep.app
+@adminEmail = admin@greenstep.app
+@password = password
+
+
+
+
+
+
+
+
+# ============================================================
+# TEST 1 — Register a new user
+# ============================================================
+# EXPECTED 201:
+# {
+#   "message": "Registered",
+#   "user": {
+#     "id": <number>,
+#     "name": "Test User",
+#     "email": "testuser@greenstep.test",
+#     "role": "member"
+#   }
+# }
+# ============================================================
+
+###
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+    "name": "Test User",
+    "email": "testuser@greenstep.test",
+    "password": "password123"
+}
+
+###
+
+# ============================================================
+# TEST 2 — Register with invalid data
+# ============================================================
+# EXPECTED 400:
+# {
+#   "errors": {
+#     "name": "min 2 chars",
+#     "email": "invalid email",
+#     "password": "min 6 chars"
+#   }
+# }
+# ============================================================
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+    "name": "A",
+    "email": "not-an-email",
+    "password": "123"
+}
+
+###
+# ============================================================
+# TEST 3 — Register duplicate email
+# ============================================================
+# EXPECTED 409:
+# {
+#   "error": "Email already registered"
+# }
+# ============================================================
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+    "name": "Test User",
+    "email": "testuser@greenstep.test",
+    "password": "password123"
+}
+
+###
+
+# ============================================================
+# TEST 4 — Login as member
+# ============================================================
+# EXPECTED 200:
+# {
+#   "token_type": "Bearer",
+#   "expires_in": 3600,
+#   "access_token": "<long JWT string eyJ...>"
+# }
+# ============================================================
+# IMPORTANT: Copy access_token and paste into @memberToken below
+# ============================================================
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "{{memberEmail}}",
+    "password": "{{password}}"
+}
+
+###
+
+# ============================================================
+# SET THIS after running Test 4
+# ============================================================
+####
+@memberToken = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDgsImlhdCI6MTc4MjM2MjUyMSwiZXhwIjoxNzgyMzY2MTIxLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ.uR7gJKdzbZHcJkNHCkqe43-uhaD2CYskGoufZ2SsfyA
+
+# ============================================================
+# TEST 5 — Login with wrong password
+# ============================================================
+# EXPECTED 401:
+# {
+#   "error": "Invalid credentials"
+# }
+# ============================================================
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "member@greenstep.test",
+    "password": "wrongpassword"
+}
+
+###
+
+# ============================================================
+# TEST 6 — GET /auth/me with valid token
+# ============================================================
+# EXPECTED 200:
+# {
+#   "id": <number>,
+#   "name": "Demo Member",
+#   "email": "member@greenstep.test",
+#   "role": "member"
+# }
+# ============================================================
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{memberToken}}
+
+###
+
+# ============================================================
+# TEST 7 — GET /auth/me with no token
+# ============================================================
+# EXPECTED 401:
+# {
+#   "error": "Missing or malformed token"
+# }
+# ============================================================
+GET {{baseUrl}}/auth/me
+
+###
+
+# ============================================================
+# TEST 8 — Log an activity with valid token
+# ============================================================
+# EXPECTED 201:
+# {
+#   "message": "Activity recorded successfully!",
+#   "logged_item": {
+#     "id": <number>,
+#     "time": "<current time e.g. 02:30 PM>",
+#     "activity": "Car (Petrol)",
+#     "amount": 10,
+#     "unit": "km",
+#     "emissions_kg": 2.1
+#   }
+# }
+# ============================================================
+POST {{baseUrl}}/api/activities/log
+Authorization: Bearer {{memberToken}}
+Content-Type: application/json
+
+{
+    "activity_type_id": 1,
+    "amount": 10,
+    "date": "2026-06-17"
+}
+
+###
+
+# ============================================================
+# TEST 9 — Create a challenge with valid token
+# ============================================================
+# EXPECTED 201:
+# {
+#   "message": "Custom challenge posted successfully",
+#   "challenge": {
+#     "id": <number>,
+#     "title": "My Test Challenge",
+#     "description": "Reduce transport emissions this week",
+#     "target_type": "transport",
+#     "created_by": <your user id from JWT sub>,
+#     "filters": ["all", "active"],
+#     "has_joined": false,
+#     "group_progress_percent": 0
+#   }
+# }
+# ============================================================
+# IMPORTANT: Note the challenge id and paste into @createdChallengeId below
+# ============================================================
+POST {{baseUrl}}/api/challenges
+Authorization: Bearer {{memberToken}}
+Content-Type: application/json
+
+{
+    "title": "My Test Challenge",
+    "description": "Reduce transport emissions this week",
+    "target_type": "transport"
+}
+
+###
+
+# ============================================================
+# SET THIS after running Test 9
+# ============================================================
+@createdChallengeId = 7
+
+###
+
+# ============================================================
+# TEST 10 — Delete own challenge as creator
+# ============================================================
+# EXPECTED 200:
+# {
+#   "message": "Challenge deleted successfully"
+# }
+# ============================================================
+DELETE {{baseUrl}}/api/challenges/{{createdChallengeId}}
+Authorization: Bearer {{memberToken}}
+
+###
+
+# ============================================================
+# BONUS TEST A — Delete a seeded challenge as member
+# Seeded challenges have created_by = NULL so no one owns them
+# ============================================================
+# EXPECTED 403:
+# {
+#   "error": "Only the challenge creator can delete this challenge"
+# }
+# ============================================================
+DELETE {{baseUrl}}/api/challenges/1
+Authorization: Bearer {{memberToken}}
+
+###
+
+# ============================================================
+# BONUS TEST B — Login as admin
+# ============================================================
+# EXPECTED 200:
+# {
+#   "token_type": "Bearer",
+#   "expires_in": 3600,
+#   "access_token": "<long JWT string eyJ...>"
+# }
+# ============================================================
+# IMPORTANT: Copy access_token and paste into @adminToken below
+# ============================================================
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "{{adminEmail}}",
+    "password": "{{password}}"
+}
+
+###
+
+# ============================================================
+# SET THIS after running Bonus Test B
+# ============================================================
+@adminToken = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDcsImlhdCI6MTc4MjM2MjMwMiwiZXhwIjoxNzgyMzY1OTAyLCJyb2xlIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQGdyZWVuc3RlcC50ZXN0In0.CUyPyokZI_V9ouOvJqzfFuOg3XQCgURR1y_4Nqh5F0o
+
+###
+
+# ============================================================
+# BONUS TEST C — Tampered token
+# ============================================================
+# EXPECTED 401:
+# {
+#   "error": "Invalid or expired token"
+# }
+# ============================================================
+GET {{baseUrl}}/auth/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.tampered.signature
+
+
+###
+# ============================================================
+# FRIEND TEST — Login as admin to get admin token
+# ============================================================
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "admin@greenstep.test",
+    "password": "password"
+}
+
+###
+
+@adminToken = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDcsImlhdCI6MTc4MjM2MjM0NCwiZXhwIjoxNzgyMzY1OTQ0LCJyb2xlIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQGdyZWVuc3RlcC50ZXN0In0.uDXlrIp9tquMhMEGVd3yflRSWZl3H0oV2m6BeM_33u0
+
+###
+
+# ============================================================
+# FRIEND TEST — Admin sends request TO Demo Member (205)
+# ============================================================
+POST {{baseUrl}}/api/friends/request
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+    "receiver_id": 1
+}
+
+###
+
+# ============================================================
+# FRIEND TEST — Demo Member accepts admin's request
+# Use the id returned from the request above
+# ============================================================
+@newRequestId = 3
+
+POST {{baseUrl}}/api/friends/accept/{{newRequestId}}
+Authorization: Bearer {{memberToken}}
+
+###
+
+# ============================================================
+# FRIEND TEST — Check friends list (expect admin to appear)
+# ============================================================
+GET {{baseUrl}}/api/friends
+Authorization: Bearer {{memberToken}}
+
+
+
+# ============================================================
+### FRIEND TEST 1 — Get my friends list (expect 200)
+# ============================================================
+# EXPECTED:
+# {
+#   "user_id": <your id>,
+#   "total": 3,
+#   "friends": [
+#     { "id": 203, "name": "Emma Watson", "eco_points": 1680, "avatar": "emma_watson.jpg" },
+#     { "id": 201, "name": "Sarah Connor", "eco_points": 1420, "avatar": "sarah_connor.jpg" },
+#     { "id": 202, "name": "Alex Mercer", "eco_points": 1100, "avatar": "alex_mercer.jpg" }
+#   ]
+# }
+GET {{baseUrl}}/api/friends
+Authorization: Bearer {{memberToken}}
+
+###
+
+# ============================================================
+# FRIEND TEST 2 — Get pending requests (expect 200)
+# ============================================================
+# EXPECTED:
+# {
+#   "user_id": <your id>,
+#   "total": 1,
+#   "pending_requests": [
+#     { "id": 1, "name": "Sarah Connor", "requested_at": "2 hours ago" }
+#   ]
+# }
+GET {{baseUrl}}/api/friends/requests
+Authorization: Bearer {{memberToken}}
+
+###
+
+# ============================================================
+# FRIEND TEST 3 — Send a friend request (expect 201)
+# ============================================================
+# EXPECTED:
+# {
+#   "message": "Friend request sent successfully",
+#   "sender_id": <your id>,
+#   "receiver_id": 202
+# }
+POST {{baseUrl}}/api/friends/request
+Authorization: Bearer {{memberToken}}
+Content-Type: application/json
+
+{
+    "receiver_id": 202
+}
+
+###
+
+# ============================================================
+# FRIEND TEST 4 — Accept a friend request (expect 200)
+# NOTE: Use the request id from FRIEND TEST 2's pending_requests
+# ============================================================
+# EXPECTED:
+# {
+#   "message": "Friend request accepted",
+#   "friend_id": <sender id>
+# }
+@requestId = 2
+
+POST {{baseUrl}}/api/friends/accept/{{requestId}}
+Authorization: Bearer {{memberToken}}
+
+
+
+
+###
+# Send new request from admin to member
+POST {{baseUrl}}/api/friends/request
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+    "receiver_id": 205
+}
+
+
+
+###
+# Register a new user to test with
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+    "name": "Reject Tester",
+    "email": "reject@greenstep.test",
+    "password": "password123"
+}
+
+###
+
+# Login as reject tester
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "reject@greenstep.test",
+    "password": "password123"
+}
+
+###
+
+@rejectToken = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDcsImlhdCI6MTc4MTY4NDA3OSwiZXhwIjoxNzgxNjg3Njc5LCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJyZWplY3RAZ3JlZW5zdGVwLnRlc3QifQ.fHOlHxeype5Nt0outQMedqm7SFqWXE14NiGa3dXOTO4
+
+###
+
+# Reject tester sends request to Demo Member (205)
+POST {{baseUrl}}/api/friends/request
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjo0LCJpYXQiOjE3ODE5MzA0MTYsImV4cCI6MTc4MTkzNDAxNiwicm9sZSI6Im1lbWJlciIsImVtYWlsIjoicmVqZWN0QGdyZWVuc3RlcC50ZXN0In0.lmlRN3DpSgdit4fc-VgJbe57YVyj3GicJLdPzXx-4-A
+Content-Type: application/json
+
+{
+    "receiver_id": 205
+}
+
+###
+
+# Demo Member REJECTS the request
+# Use the request id returned above
+@rejectRequestId = 4
+
+POST {{baseUrl}}/api/friends/reject/{{rejectRequestId}}
+Authorization: Bearer {{memberToken}}
+
+
+
+
+
+
+
+
+
+
+###
+
+# ============================================================
+# FRIEND TEST 5 — Reject a friend request (expect 200)
+# ============================================================
+# EXPECTED:
+# {
+#   "message": "Friend request rejected"
+# }
+POST {{baseUrl}}/api/friends/reject/{{requestId}}
+Authorization: Bearer {{memberToken}}
+
+###
+
+# ============================================================
+# FRIEND TEST 6 — Send request to yourself (expect 400)
+# ============================================================
+# EXPECTED:
+# {
+#   "error": "You cannot send a friend request to yourself"
+# }
+POST {{baseUrl}}/api/friends/request
+Authorization: Bearer {{memberToken}}
+Content-Type: application/json
+
+{
+    "receiver_id": 205
+}
+
+###
+
+# ============================================================
+# FRIEND TEST 7 — No token (expect 401)
+# ============================================================
+# EXPECTED:
+# {
+#   "error": "Missing or malformed token"
+# }
+GET {{baseUrl}}/api/friends
+
+
+
+###
+GET {{baseUrl}}/api/leaderboard
+Authorization: Bearer {{memberToken}}
+
+
+###
+GET {{baseUrl}}/api/goals
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDUsImlhdCI6MTc4MTY4ODkzMCwiZXhwIjoxNzgxNjkyNTMwLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ.sg0qyuUufROSxNxAV68HY87v_NXaFWlhoUDE0VYJIWE
+
+###
+POST {{baseUrl}}/api/goals
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDUsImlhdCI6MTc4MTY4ODkzMCwiZXhwIjoxNzgxNjkyNTMwLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ.sg0qyuUufROSxNxAV68HY87v_NXaFWlhoUDE0VYJIWE
+Content-Type: application/json
+
+{
+    "title": "Reduce My Carbon Footprint",
+    "target_to_reduce_kg": 50.00,
+    "duration": "30 days",
+    "start_date": "2026-06-17"
+}
+
+###
+GET {{baseUrl}}/api/photos
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDUsImlhdCI6MTc4MTY4ODkzMCwiZXhwIjoxNzgxNjkyNTMwLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ.sg0qyuUufROSxNxAV68HY87v_NXaFWlhoUDE0VYJIWE
+
+
+
+###
+POST {{baseUrl}}/api/photos
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDUsImlhdCI6MTc4MTY4ODkzMCwiZXhwIjoxNzgxNjkyNTMwLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ.sg0qyuUufROSxNxAV68HY87v_NXaFWlhoUDE0VYJIWE
+Content-Type: application/json
+
+{
+    "image_url": "https://example.com/photo1.jpg",
+    "achievement": "Cycled to work for a full week!"
+}
+
+
+###
+# ============================================================
+# PROTECTED ROUTE TEST 1 — Dashboard with JWT (expect 200)
+# ============================================================
+# EXPECTED:
+# {
+#   "panels": { "today_emissions_kg": ..., "eco_points": { ... } },
+#   "charts": { ... },
+#   "todays_tip": { ... },
+#   "active_challenge": { ... }
+# }
+GET {{baseUrl}}/api/dashboard
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDUsImlhdCI6MTc4MTY4ODkzMCwiZXhwIjoxNzgxNjkyNTMwLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ.sg0qyuUufROSxNxAV68HY87v_NXaFWlhoUDE0VYJIWE
+
+###
+
+# ============================================================
+# PROTECTED ROUTE TEST 2 — Dashboard without JWT (expect 401)
+# ============================================================
+# EXPECTED:
+# { "error": "Missing or malformed token" }
+GET {{baseUrl}}/api/dashboard
+
+###
+
+# ============================================================
+# PROTECTED ROUTE TEST 3 — Today's logs with JWT (expect 200)
+# ============================================================
+# EXPECTED:
+# [] (empty array if no logs today for Demo Member)
+GET {{baseUrl}}/api/activities/today
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDUsImlhdCI6MTc4MTY4ODkzMCwiZXhwIjoxNzgxNjkyNTMwLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ.sg0qyuUufROSxNxAV68HY87v_NXaFWlhoUDE0VYJIWE
+
+###
+
+# ============================================================
+# PROTECTED ROUTE TEST 4 — Today's logs without JWT (expect 401)
+# ============================================================
+# EXPECTED:
+# { "error": "Missing or malformed token" }
+GET {{baseUrl}}/api/activities/today
+
+###
+
+# ============================================================
+# PROTECTED ROUTE TEST 5 — History with JWT (expect 200)
+# ============================================================
+# EXPECTED:
+# [] (empty array if no logs for Demo Member)
+GET {{baseUrl}}/api/activities/history
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDUsImlhdCI6MTc4MTY4ODkzMCwiZXhwIjoxNzgxNjkyNTMwLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ.sg0qyuUufROSxNxAV68HY87v_NXaFWlhoUDE0VYJIWE
+
+###
+
+# ============================================================
+# PROTECTED ROUTE TEST 6 — Challenges with JWT (expect 200)
+# ============================================================
+# EXPECTED:
+# [
+#   { "id": 1, "title": "Green Commute Race", "has_joined": false, ... },
+#   ...
+# ]
+GET {{baseUrl}}/api/challenges
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDUsImlhdCI6MTc4MTY4ODkzMCwiZXhwIjoxNzgxNjkyNTMwLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ.sg0qyuUufROSxNxAV68HY87v_NXaFWlhoUDE0VYJIWE
+
+###
+
+# ============================================================
+# PROTECTED ROUTE TEST 7 — Challenges without JWT (expect 401)
+# ============================================================
+# EXPECTED:
+# { "error": "Missing or malformed token" }
+GET {{baseUrl}}/api/challenges
+
+###
+
+# ============================================================
+# PROTECTED ROUTE TEST 8 — Log activity with JWT (expect 201)
+# ============================================================
+# EXPECTED:
+# {
+#   "message": "Activity recorded successfully!",
+#   "logged_item": {
+#     "activity": "Car (Petrol)",
+#     "amount": 5,
+#     "unit": "km",
+#     "emissions_kg": 1.05
+#   }
+# }
+POST {{baseUrl}}/api/activities/log
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDUsImlhdCI6MTc4MTY4ODkzMCwiZXhwIjoxNzgxNjkyNTMwLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ.sg0qyuUufROSxNxAV68HY87v_NXaFWlhoUDE0VYJIWE
+Content-Type: application/json
+
+{
+    "activity_type_id": 1,
+    "amount": 5,
+    "date": "2026-06-17"
+}
+
+###
+
+# ============================================================
+# PROTECTED ROUTE TEST 9 — Check today's logs after logging
+# Should now show the activity logged in Test 8
+# ============================================================
+# EXPECTED:
+# [ { "activity": "Car (Petrol)", "emissions_kg": 1.05, ... } ]
+GET {{baseUrl}}/api/activities/today
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDUsImlhdCI6MTc4MTY4ODkzMCwiZXhwIjoxNzgxNjkyNTMwLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ.sg0qyuUufROSxNxAV68HY87v_NXaFWlhoUDE0VYJIWE
+
+###
+
+# ============================================================
+# PROTECTED ROUTE TEST 10 — Dashboard after logging
+# today_emissions_kg should now reflect Test 8's log
+# ============================================================
+# EXPECTED:
+# { "panels": { "today_emissions_kg": 1.05, ... } }
+GET {{baseUrl}}/api/dashboard
+Authorization: Bearer  eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDUsImlhdCI6MTc4MTY4ODkzMCwiZXhwIjoxNzgxNjkyNTMwLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ.sg0qyuUufROSxNxAV68HY87v_NXaFWlhoUDE0VYJIWE
+
+
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "member@greenstep.test",
+    "password": "password"
+}
+
+
+###
+# Join a challenge (expect 200)
+POST {{baseUrl}}/api/challenges/1/join
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyLCJpYXQiOjE3ODE5MTU5MDksImV4cCI6MTc4MTkxOTUwOSwicm9sZSI6Im1lbWJlciIsImVtYWlsIjoibWVtYmVyQGdyZWVuc3RlcC50ZXN0In0.tSC4sYfzn2E5fGEqOwYNrmBra2phsqY7NR0B1BfXryA
+
+###
+
+# Join same challenge again (expect 409)
+POST {{baseUrl}}/api/challenges/1/join
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyLCJpYXQiOjE3ODE5MTU5MDksImV4cCI6MTc4MTkxOTUwOSwicm9sZSI6Im1lbWJlciIsImVtYWlsIjoibWVtYmVyQGdyZWVuc3RlcC50ZXN0In0.tSC4sYfzn2E5fGEqOwYNrmBra2phsqY7NR0B1BfXryA
+
+###
+
+# Join non-existent challenge (expect 404)
+POST {{baseUrl}}/api/challenges/999/join
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyLCJpYXQiOjE3ODE5MTU5MDksImV4cCI6MTc4MTkxOTUwOSwicm9sZSI6Im1lbWJlciIsImVtYWlsIjoibWVtYmVyQGdyZWVuc3RlcC50ZXN0In0.tSC4sYfzn2E5fGEqOwYNrmBra2phsqY7NR0B1BfXryA
+
+
+###
+POST {{baseUrl}}/api/photos
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyLCJpYXQiOjE3ODE5MTU5MDksImV4cCI6MTc4MTkxOTUwOSwicm9sZSI6Im1lbWJlciIsImVtYWlsIjoibWVtYmVyQGdyZWVuc3RlcC50ZXN0In0.tSC4sYfzn2E5fGEqOwYNrmBra2phsqY7NR0B1BfXryA
+Content-Type: application/json
+
+{
+    "image_url": "https://example.com/photo2.jpg",
+    "achievement": "Went vegan for a week!"
+}
+
+
+###
+GET {{baseUrl}}/api/leaderboard
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjoyMDUsImlhdCI6MTc4MTgzNzQ0MywiZXhwIjoxNzgxODQxMDQzLCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAZ3JlZW5zdGVwLnRlc3QifQ._tnRm7j6sveWOUTc1TFGQSbQsqW9ings0VQUhuv49rY
+
+
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "member@greenstep.test",
+    "password": "password"
+}
+
+###Test 2
+POST http://localhost:8000/auth/login 
+Content-Type: application/json 
+  
+{ 
+    "email":"admin@books.test", 
+    "password":"password" 
+}
+
+
+
+============================================================
+STEP 1 — Login as member to get fresh token
+============================================================
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "member@greenstep.test",
+    "password": "password"
+}
+
+
+============================================================
+STEP 2 — Check available activity types first
+============================================================
+GET {{baseUrl}}/api/activities/types
+
+============================================================
+STEP 3 — Log a Car (Petrol) activity (activity_type_id: 1)
+10km x 0.21 kg/km = 2.1 kg CO2
+============================================================
+EXPECTED 201:
+{
+"message": "Activity recorded successfully!",
+"logged_item": {
+"activity": "Car (Petrol)",
+"amount": 10,
+"unit": "km",
+"emissions_kg": 2.1
+}
+}
+POST {{baseUrl}}/api/activities/log
+Authorization: Bearer {{memberToken}}
+Content-Type: application/json
+
+{
+    "activity_type_id": 1,
+    "amount": 10,
+    "date": "2026-06-20"
+}
+
+============================================================
+STEP 4 — Check today's logs to confirm it was recorded
+============================================================
+EXPECTED 200:
+[ { "activity": "Car (Petrol)", "emissions_kg": 2.1, ... } ]
+GET {{baseUrl}}/api/activities/today
+Authorization: Bearer {{memberToken}}
+
+============================================================
+STEP 5 — Check dashboard to see emissions updated
+============================================================
+EXPECTED 200:
+{ "panels": { "today_emissions_kg": 2.1, "eco_points": { "current_total": 15, ... } } }
+GET {{baseUrl}}/api/dashboard
+Authorization: Bearer {{memberToken}}
+
+///////////////////////////////////////
+============================================================
+STEP 1 — Login as member to get fresh token
+============================================================
+##########
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "member@greenstep.test",
+    "password": "password"
+}
+
+
+============================================================
+STEP 2 — Check available activity types first
+============================================================
+GET {{baseUrl}}/api/activities/types
+
+============================================================
+STEP 3 — Log a Car (Petrol) activity (activity_type_id: 1)
+10km x 0.21 kg/km = 2.1 kg CO2
+============================================================
+EXPECTED 201:
+{
+"message": "Activity recorded successfully!",
+"logged_item": {
+"activity": "Car (Petrol)",
+"amount": 10,
+"unit": "km",
+"emissions_kg": 2.1
+}
+}
+POST {{baseUrl}}/api/activities/log
+Authorization: Bearer {{memberToken}}
+Content-Type: application/json
+
+{
+    "activity_type_id": 1,
+    "amount": 10,
+    "date": "2026-06-20"
+}
+
+============================================================
+STEP 4 — Check today's logs to confirm it was recorded
+============================================================
+EXPECTED 200:
+[ { "activity": "Car (Petrol)", "emissions_kg": 2.1, ... } ]
+GET {{baseUrl}}/api/activities/today
+Authorization: Bearer {{memberToken}}
+
+============================================================
+STEP 5 — Check dashboard to see emissions updated
+============================================================
+EXPECTED 200:
+{ "panels": { "today_emissions_kg": 2.1, "eco_points": { "current_total": 15, ... } } }
+GET {{baseUrl}}/api/dashboard
+Authorization: Bearer {{memberToken}}
+
+///////////////////////////////////////////////
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "member@greenstep.test",
+    "password": "password"
+}
+
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "member@greenstep.test",
+    "password": "password"
+}
+
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "member@greenstep.test",
+    "password": "password"
+}
+
+
+# ============================================================
+# STEP 1 — Login as member to get fresh token
+# ============================================================
+###
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "member@greenstep.test",
+    "password": "password"
+}
+
+
+###
+
+# ============================================================
+# STEP 2 — Check available activity types first
+# ============================================================
+GET {{baseUrl}}/api/activities/types
+
+###
+
+# ============================================================
+# STEP 3 — Log a Car (Petrol) activity (activity_type_id: 1)
+# 10km x 0.21 kg/km = 2.1 kg CO2
+# ============================================================
+# EXPECTED 201:
+# {
+#   "message": "Activity recorded successfully!",
+#   "logged_item": {
+#     "activity": "Car (Petrol)",
+#     "amount": 10,
+#     "unit": "km",
+#     "emissions_kg": 2.1
+#   }
+# }
+POST {{baseUrl}}/api/activities/log
+Authorization: Bearer {{memberToken}}
+Content-Type: application/json
+
+{
+    "activity_type_id": 1,
+    "amount": 10,
+    "date": "2026-06-20"
+}
+
+###
+
+# ============================================================
+# STEP 4 — Check today's logs to confirm it was recorded
+# ============================================================
+# EXPECTED 200:
+# [ { "activity": "Car (Petrol)", "emissions_kg": 2.1, ... } ]
+GET {{baseUrl}}/api/activities/today
+Authorization: Bearer {{memberToken}}
+
+###
+
+# ============================================================
+# STEP 5 — Check dashboard to see emissions updated
+# ============================================================
+# EXPECTED 200:
+# { "panels": { "today_emissions_kg": 2.1, "eco_points": { "current_total": 15, ... } } }
+GET {{baseUrl}}/api/dashboard
+Authorization: Bearer {{memberToken}}
+
+
+NEVER TOUCH THIS TOKEN BELOW, IT'S FOR TESTING EXPIRED TOKEN SCENARIO
+# ###
+# POST {{baseUrl}}/api/reset
+# Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJncmVlbnN0ZXAtYXBpIiwic3ViIjo4LCJpYXQiOjE3ODIxMDU1MjYsImV4cCI6MTc4MjEwOTEyNiwicm9sZSI6Im1lbWJlciIsImVtYWlsIjoibWVtYmVyQGdyZWVuc3RlcC50ZXN0In0.L2u61yLZzs_uCYhnWZ607xZ_wh1HyiCx2bNJwqGB11E
+
+
+###
+OPTIONS http://localhost:8000/auth/login
+
+###
+OPTIONS /auth/login
+
+###
+GET /api/users/search?q=john

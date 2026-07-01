@@ -1,0 +1,163 @@
+<?php
+
+/**
+ * GreenStep Comprehensive Baseline Seeding Data
+ * Emulates full relational states for all features across the application.
+ */
+
+return [
+    // --- APP CONFIGURATION / METRICS (Used for Activity Logging Validation) ---
+    'activity_types' => [
+        ['id' => 1, 'category' => 'Transport', 'name' => 'Car (Petrol)', 'unit' => 'km', 'kg_co2_per_unit' => 0.21, 'info' => 'Car(Petrol) - 0.21kg/km'], 
+        ['id' => 2, 'category' => 'Transport', 'name' => 'Train',        'unit' => 'km', 'kg_co2_per_unit' => 0.04, 'info' => 'Train - 0.04kg/km'], 
+        ['id' => 3, 'category' => 'Transport', 'name' => 'Bus',          'unit' => 'km', 'kg_co2_per_unit' => 0.08, 'info' => 'Bus - 0.08kg/km'], 
+        ['id' => 4, 'category' => 'Transport', 'name' => 'Flight',       'unit' => 'km', 'kg_co2_per_unit' => 0.15, 'info' => 'Flight - 0.15kg/km'],
+        ['id' => 5, 'category' => 'Food',      'name' => 'Red Meat Meal','unit' => 'meal', 'kg_co2_per_unit' => 6.00, 'info' => 'Red Meat - 6.00kg/meal'], 
+        ['id' => 6, 'category' => 'Food',      'name' => 'Mixed Meal',   'unit' => 'meal', 'kg_co2_per_unit' => 2.50, 'info' => 'Mixed Meal - 2.50kg/meal'], 
+        ['id' => 7, 'category' => 'Food',      'name' => 'Veg Meal',     'unit' => 'meal', 'kg_co2_per_unit' => 0.70, 'info' => 'Veg Meal - 0.70kg/meal'], 
+        ['id' => 8, 'category' => 'Energy',    'name' => 'Electricity',  'unit' => 'kWh',  'kg_co2_per_unit' => 0.50, 'info' => 'Electricity - 0.50kg/kWh'], 
+        ['id' => 9, 'category' => 'Waste',     'name' => 'Recycling',    'unit' => 'count', 'kg_co2_per_unit' => -0.50, 'info' => 'Recycling - Saves 0.50kg/item'], 
+    ],
+
+    // --- DASHBOARD DATA ENGINE ---
+    'dashboard' => [
+        'panels' => [
+            'today_emissions_kg' => 14.25, 
+            'weekly_total_kg' => 92.40, 
+            'monthly_average_kg' => 385.00, 
+            'eco_points' => [
+                'current_total' => 1240,
+                'gained_today' => 80 
+            ]
+        ],
+        'charts' => [
+            // Today's breakdown pie/doughnut data
+            'today_breakdown' => [ 
+                'transport' => 6.30,
+                'food' => 6.70, 
+                'energy' => 1.25 
+            ],
+            // Weekly total emissions bar graph (Monday to Sunday)
+            'weekly_history_graph' => [ 
+                ['day' => 'Monday',    'emissions_kg' => 15.2],
+                ['day' => 'Tuesday',   'emissions_kg' => 12.4],
+                ['day' => 'Wednesday', 'emissions_kg' => 18.1],
+                ['day' => 'Thursday',  'emissions_kg' => 14.25], // Today
+                ['day' => 'Friday',    'emissions_kg' => 0.0],
+                ['day' => 'Saturday',  'emissions_kg' => 0.0],
+                ['day' => 'Sunday',    'emissions_kg' => 0.0]
+            ]
+        ],
+        'referenced_today_tip_id' => 2, // Connected to Tip Library [cite: 9]
+        'referenced_active_challenge_id' => 101 // Connected to Challenges [cite: 10]
+    ],
+
+    // --- LOG RECORD & ACTIVITY HISTORY ---
+    'today_log_record' => [ 
+        ['id' => 501, 'time' => '08:30 AM', 'activity' => 'Car (Petrol)', 'amount' => 30, 'unit' => 'km', 'emissions_kg' => 6.30], 
+        ['id' => 502, 'time' => '12:45 PM', 'activity' => 'Veg Meal', 'amount' => 1, 'unit' => 'meal', 'emissions_kg' => 0.70], 
+        ['id' => 503, 'time' => '06:00 PM', 'activity' => 'Red Meat Meal', 'amount' => 1, 'unit' => 'meal', 'emissions_kg' => 6.00] 
+    ],
+    'my_history' => [ 
+        ['date' => '2026-06-15', 'total_emissions_kg' => 14.25, 'logs_count' => 3], 
+        ['date' => '2026-06-14', 'total_emissions_kg' => 18.10, 'logs_count' => 4], 
+        ['date' => '2026-06-13', 'total_emissions_kg' => 12.40, 'logs_count' => 2], 
+        ['date' => '2026-06-12', 'total_emissions_kg' => 15.20, 'logs_count' => 5] 
+    ],
+
+    // --- CHALLENGES PAGE (All, Joined, Active, Completed Filters) ---
+    'challenges' => [ 
+        [
+            'id' => 101,
+            'title' => 'Green Commute Race',
+            'description' => 'Swap private cars for trains or buses to lower city traffic footprints.', 
+            'target_type' => 'Transport',
+            'filters' => ['all', 'joined', 'active'],
+            'has_joined' => true, 
+            'group_progress_percent' => 68.5 // Combined real-time community savings metric 
+        ],
+        [
+            'id' => 102,
+            'title' => 'The Vegan Streak',
+            'description' => 'Log exclusively vegetarian meals for 7 consecutive days.',
+            'target_type' => 'Food', 
+            'filters' => ['all', 'active'], 
+            'has_joined' => false, 
+            'group_progress_percent' => 42.0 
+        ],
+        [
+            'id' => 103,
+            'title' => 'Zero Waste Heroes',
+            'description' => 'Log 20 verified recycling milestones.',
+            'target_type' => 'Waste', 
+            'filters' => ['all', 'joined', 'completed'], 
+            'has_joined' => true, 
+            'group_progress_percent' => 100.0 
+        ]
+    ],
+
+    // --- SOCIAL & FRIENDS ---
+    'friends_page' => [ 
+        'my_friends' => [ 
+            ['id' => 201, 'name' => 'Sarah Connor', 'eco_points' => 1420, 'avatar' => 'sarah.jpg'],
+            ['id' => 202, 'name' => 'Alex Mercer', 'eco_points' => 1100, 'avatar' => 'alex.jpg'],
+            ['id' => 203, 'name' => 'Emma Watson', 'eco_points' => 1680, 'avatar' => 'emma.jpg']
+        ],
+        'pending_requests' => [ 
+            ['id' => 204, 'name' => 'James Sutherland', 'requested_at' => '2 hours ago'],
+            ['id' => 205, 'name' => 'Clara Oswald', 'requested_at' => 'Yesterday'] 
+    ],
+
+    // --- LEADERBOARD & INDIVIDUAL RANK ANALYTICS ---
+    'leaderboard_page' => [ 
+        'community_leaderboard' => [ // Rankings sorted by Eco Points [cite: 30]
+            ['rank' => 1, 'name' => 'Emma Watson', 'eco_points' => 1680, 'is_current_user' => false], 
+            ['rank' => 2, 'name' => 'Sarah Connor', 'eco_points' => 1420, 'is_current_user' => false], 
+            ['rank' => 3, 'name' => 'You (GreenRunner)', 'eco_points' => 1240, 'is_current_user' => true], 
+            ['rank' => 4, 'name' => 'Alex Mercer', 'eco_points' => 1100, 'is_current_user' => false] 
+        ],
+        'user_analytics_panel' => [ 
+            'current_rank' => 3, 
+            'top_increased_categories' => 
+                ['category' => 'Food', 'percentage_increase' => 24, 'primary_cause' => 'Red Meat Meal'], 
+                ['category' => 'Transport', 'percentage_increase' => 12, 'primary_cause' => 'Car (Petrol)'] 
+            ]
+        ]
+    ],
+
+    // --- PERFORMANCE GOALS ---
+    'my_goal_page' => [ 
+        'current_goal' => [ 
+            'title' => 'Cut Summer Carbon Footprint',
+            'target_to_reduce_kg' => 50.00, 
+            'duration' => '30 Days', 
+            'start_date' => '2026-06-01' 
+        ],
+        'progress' => [ 
+            'emissions_reduced_so_far_kg' => 22.40, 
+            'current_average_kg' => 14.25, 
+            'target_average_kg' => 11.00 
+        ]
+    ],
+
+    // --- ECO PHOTOS TIMELINE ---
+    'eco_photos_page' => [ 
+        'bonus_point_summary' => [ 
+            'total_earned_points' => 160, // 4 uploaded photos x 40 points [cite: 40]
+            'rule_text' => '+40 Points per Photo + Goal Achieved' 
+        ],
+        'my_eco_photos' => [ // History list display mapping [cite: 40]
+            ['id' => 401, 'image_url' => 'uploads/reusable_cup.jpg', 'achievement' => 'Used stainless steel flask at coffee shop instead of single-use paper cups.', 'uploaded_on' => '2026-06-15'], 
+            ['id' => 402, 'image_url' => 'uploads/canvas_bag.jpg', 'achievement' => 'Brought personal canvas bags for bulk grocery shopping.', 'uploaded_on' => '2026-06-13'], 
+            ['id' => 403, 'image_url' => 'uploads/ebike_commute.jpg', 'achievement' => 'Rode e-bike to work over 15km instead of driving standard auto.', 'uploaded_on' => '2026-06-10'] 
+        ]
+    ],
+
+    // --- TIP LIBRARY FILTERS CONFIGURATION ---
+    'tip_library' => [ 
+        ['id' => 1, 'labels' => ['All Tips', 'Transport'], 'title' => 'Transit Switch', 'body' => 'Swap two local vehicle commutes this week for public bus trips.'], 
+        ['id' => 2, 'labels' => ['All Tips', 'Food'], 'title' => 'Meatless Mondays', 'body' => 'Skipping red meat meals for one day saves substantial production-chain carbon.'], 
+        ['id' => 3, 'labels' => ['All Tips', 'Energy'], 'title' => 'Smart Thermostats', 'body' => 'Lower cooling systems by 1 degree during high heat peaks to preserve regional power grid draw.'], 
+        ['id' => 4, 'labels' => ['All Tips', 'Waste'], 'title' => 'Compost Scrap', 'body' => 'Sort biodegradable organic waste away from landfills to lower localized methane outputs.'] 
+    ]
+];
