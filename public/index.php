@@ -30,8 +30,8 @@ require_once __DIR__ . '/../src/Middleware/JsonBodyParser.php';
 require_once __DIR__ . '/../src/Middleware/Cors.php';
 
 // 5. Instantiate and attach middleware class objects explicitly
-$app->add(new \App\Middleware\JsonBodyParser());
 $app->add(new \App\Middleware\Cors());
+$app->add(new \App\Middleware\JsonBodyParser());
 
 // 6. Add Built-in Slim Routing Middleware
 $app->addRoutingMiddleware();

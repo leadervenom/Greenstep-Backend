@@ -36,7 +36,7 @@ final class ActivityRepository
     public function getLogsByDate(int $userId, string $date): array
     {
         $sql = 'SELECT l.id, 
-                       DATE_FORMAT(l.logged_at, "%h:%i %p") AS time, 
+                       DATE_FORMAT(l.logged_at, \'%h:%i %p\') AS time, 
                        t.name AS activity, 
                        l.amount, 
                        t.unit, 
