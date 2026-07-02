@@ -398,7 +398,10 @@ public function joinChallenge(Request $req, Response $res, array $args): Respons
     private function json(Response $res, mixed $data, int $status = 200): Response
     {
         $res->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-        $res->withHeader('Access-Control-Allow-Origin', '*');
+        $res = $res->withHeader('Access-Control-Allow-Origin', '*')
+                   ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+                   ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+
         return $res->withHeader('Content-Type', 'application/json; charset=utf-8')->withStatus($status);
     }
 }
