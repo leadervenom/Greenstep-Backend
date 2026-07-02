@@ -2,6 +2,56 @@
 
 A carbon footprint tracking REST API built with Slim Framework 4, MySQL, and JWT authentication.
 
+## 📁 Project Structure
+
+```text
+backend_greenstep_api/
+├── .agents/
+├── certs/
+├── public/
+│   └── index.php
+├── sql/
+│   ├── greenstep.sql
+│   ├── query3.sql
+│   └── seed_data.sql
+├── src/
+│   ├── Auth/
+│   │   └── JwtService.php
+│   ├── Controllers/
+│   │   ├── ActivityController.php
+│   │   ├── AuthController.php
+│   │   ├── EcoPhotoController.php
+│   │   ├── FriendController.php
+│   │   └── GoalController.php
+│   ├── Data/
+│   │   └── data.php
+│   ├── Middleware/
+│   │   ├── AuthMiddleware.php
+│   │   ├── Cors.php
+│   │   └── JsonBodyParser.php
+│   ├── Repositories/
+│   │   ├── ActivityRepository.php
+│   │   ├── ChallengeRepository.php
+│   │   ├── GoalRepository.php
+│   │   ├── TipRepository.php
+│   │   └── UserRepository.php
+│   ├── Database.php
+│   └── routes.php
+├── var/
+│   └── greenstep_data.json
+├── vendor/
+├── .env
+├── .env.example
+├── composer.json
+├── composer.lock
+├── debug.php
+├── Dockerfile
+├── kugaann.http
+├── README.md
+├── test_api.http
+└── .gitignore
+```
+
 ---
 
 ## 📋 Requirements
